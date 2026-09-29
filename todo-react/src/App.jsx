@@ -1,66 +1,98 @@
 import Form from "./components/Form";
 import FilterButton from "./components/FilterButton";
 import Todo from "./components/Todo";
-import {useState} from "react";
+import { useState, useRef, useEffect } from "react";
 import { nanoid } from "nanoid";
 
 const FILTER_MAP = {
   All: () => true,
   Active: (task) => !task.completed,
   Completed: (task) => task.completed,
+  Fontossag: (task) => !task.completed,
 };
 
 const FILTER_NAMES = Object.keys(FILTER_MAP);
 
-function App(props) {
-  const [filter, setFilter] = useState("All");
-  const [tasks, setTasks] = useState(props.tasks);
+const initTasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
-  function editTask(id, newName) {
-    const editedTaskList = tasks.map((task) => {
-      // if this task has the same ID as the edited task
-      if (id === task.id) {
-        // Copy the task and update its name
-        return { ...task, name: newName };
-      }
-      // Return the original task if it's not the edited task
-      return task;
-    });
-    setTasks(editedTaskList);
+function App() {
+  const [filter, setFilter] = useState("All");
+  const [tasks, setTasks] = useState(initTasks);
+
+  const listHeadingRef = useRef(null);
+  const previousTaskLengthRef = useRef(tasks.length);
+
+  useEffect(() => {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }, [tasks]);
+
+  useEffect(() => {
+    if (tasks.length < previousTaskLengthRef.current) {
+      listHeadingRef.current?.focus();
+    }
+
+    previousTaskLengthRef.current = tasks.length;
+  }, [tasks.length]);
+
+  function addTask(name) {
+    const tiltottLista = ["react"];
+    const tisztitottNev = name.trim();
+
+    if (tiltottLista.includes(tisztitottNev.toLowerCase())) {
+      return false;
+    }
+
+    const newTask = {
+      id: `todo-${nanoid()}`,
+      name: tisztitottNev,
+      priority: "0",
+      completed: false,
+    };
+
+    setTasks((previousTasks) => [...previousTasks, newTask]);
+    return true;
+  }
+
+  function editTask(id, newName, newPriority) {
+    setTasks((previousTasks) =>
+      previousTasks.map((task) =>
+        task.id === id
+          ? { ...task, name: newName, priority: newPriority }
+          : task
+      )
+    );
   }
 
   function toggleTaskCompleted(id) {
-  const updatedTasks = tasks.map((task) => {
-    // if this task has the same ID as the edited task
-    if (id === task.id) {
-      // use object spread to make a new object
-      // whose `completed` prop has been inverted
-      return { ...task, completed: !task.completed };
-    }
-    return task;
-  });
-  setTasks(updatedTasks);
+    setTasks((previousTasks) =>
+      previousTasks.map((task) =>
+        task.id === id
+          ? { ...task, completed: !task.completed }
+          : task
+      )
+    );
   }
 
   function deleteTask(id) {
-      const remainingTasks = tasks.filter((task) => id !== task.id);
-      setTasks(remainingTasks);
-  } 
+    setTasks((previousTasks) =>
+      previousTasks.filter((task) => task.id !== id)
+    );
+  }
 
-
-    const taskList = tasks
-  .filter(FILTER_MAP[filter])
-  .map((task) => (
-    <Todo
-      id={task.id}
-      name={task.name}
-      completed={task.completed}
-      key={task.id}
-      toggleTaskCompleted={toggleTaskCompleted}
-      deleteTask={deleteTask}
-      editTask={editTask}
-    />
-  ));
+  const taskList = tasks
+    .filter(FILTER_MAP[filter])
+    .map((task) => (
+      <Todo
+        key={task.id}
+        id={task.id}
+        name={task.name}
+        priority={task.priority}
+        completed={task.completed}
+        toggleTaskCompleted={toggleTaskCompleted}
+        deleteTask={deleteTask}
+        editTask={editTask}
+      />
+    ));
 
   const filterList = FILTER_NAMES.map((name) => (
     <FilterButton
@@ -70,28 +102,37 @@ function App(props) {
       setFilter={setFilter}
     />
   ));
-  function addTask(name) {
-      const newTask = { id: `todo-${nanoid()}`, name, completed: false };
-    setTasks([...tasks, newTask]);
-  }
 
-  const tasksNoun = taskList.length !== 1 ? "tasks" : "task";
-  const headingText = `${taskList.length} tasks remaining`;
-
-
+  const headingText = `${taskList.length} feladat a listában`;
 
   return (
     <div className="todoapp stack-large">
-      <h1>TodoMatic</h1>
+      <header className="app-header">
+        <p className="app-eyebrow">Egy kis rend, több nyugalom</p>
+        <h1>TodoMatic<span aria-hidden="true">.</span></h1>
+        <p className="app-subtitle">Apró lépésekből lesznek a nagy dolgok.</p>
+      </header>
+
       <Form addTask={addTask} />
-      <div className="filters btn-group stack-exception">{filterList}</div>
-      <h2 id="list-heading">{headingText}</h2>
+
+      <div className="filters btn-group stack-exception">
+        {filterList}
+      </div>
+
+      <h2 id="list-heading" tabIndex="-1" ref={listHeadingRef}>
+        {headingText}
+      </h2>
+
       <ul
         role="list"
         className="todo-list stack-large stack-exception"
-        aria-labelledby="list-heading">
+        aria-labelledby="list-heading"
+      >
         {taskList}
       </ul>
+      {taskList.length === 0 && (
+        <p className="empty-state">Itt most nincs feladat. Adj hozzá egyet, vagy válassz másik szűrőt.</p>
+      )}
     </div>
   );
 }
