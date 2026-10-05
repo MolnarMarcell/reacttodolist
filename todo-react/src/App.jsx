@@ -3,6 +3,7 @@ import FilterButton from "./components/FilterButton";
 import Todo from "./components/Todo";
 import { useState, useRef, useEffect } from "react";
 import { nanoid } from "nanoid";
+import ServerAllapot from "./components/serverallapot";
 
 const FILTER_MAP = {
   All: () => true,
@@ -105,6 +106,9 @@ function App() {
 
   const headingText = `${taskList.length} feladat a listában`;
 
+
+
+
   return (
     <div className="todoapp stack-large">
       <header className="app-header">
@@ -112,6 +116,7 @@ function App() {
         <h1>TodoMatic<span aria-hidden="true">.</span></h1>
         <p className="app-subtitle">Apró lépésekből lesznek a nagy dolgok.</p>
       </header>
+      <ServerAllapot/>
 
       <Form addTask={addTask} />
 
